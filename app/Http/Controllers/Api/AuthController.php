@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -24,7 +27,38 @@ class AuthController extends Controller
             "password"=> bcrypt($validated["password"]),
          ]);
 
-         return response()->json([]);
+         return response()->json([
+            "message"=>"registration successfully"
+         ]);
+
+    }
+
+    public function login(Request $request): JsonResponse
+    {
+        $credentials = $request->only("email", "password");
+
+        $user = User::where("email", $credentials["email"])->first();
+        if(!$user||!Hash::check($credentials["password"], $user->password)){
+
+            throw ValidationException::withMessages([
+                "email" => ["The provided credentials are incorrect."],
+            ]);
+        }
+
+        return response()->json([
+            "token" => $user->createToken("auth_token")->plainTextToken,
+            "user" => $user,
+        ], 201);
+    }
+
+    public function user(Request $request){
+        return $request->user();
+    }
+    public function logout(Request $request): JsonResponse{
+
+        $request->user()->currentAccessToken()->delete();   
+
+        return response()->json(['message'=>'Logged out']);
 
     }
 }
