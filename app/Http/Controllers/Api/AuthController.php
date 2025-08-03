@@ -36,7 +36,8 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->only("email", "password");
-
+        // option 2: token authentication
+       
         $user = User::where("email", $credentials["email"])->first();
         if(!$user||!Hash::check($credentials["password"], $user->password)){
 
@@ -48,7 +49,12 @@ class AuthController extends Controller
         return response()->json([
             "token" => $user->createToken("auth_token")->plainTextToken,
             "user" => $user,
-        ], 201);
+        ], 201); 
+        /* option 1: sanctum SPA authentication
+        if (Auth::attempt($credentials)) {
+                        return response()->json(['message' => 'Logged in',],201);
+        }
+        return response()->json(['message' => 'Invalid credentials'], 401); */
     }
 
     public function user(Request $request){
